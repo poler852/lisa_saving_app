@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lisa理財小程式</title>
+<style>
+  :root{
+    --bg: #0f121a;
+    --card: #141a26;
+    --text: #e9edf7;
+    --muted: #9aa3b8;
+    --accent: #7c5cff;
+    --danger: #ff4d6d;
+    --border: #1f2a3b;
+    --shadow: 0 10px 25px rgba(0,0,0,0.25);
+  }
+
+  *{ box-sizing: border-box; }
+
+  body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--text);
+  }
+
+  .container {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 16px;
+  }
+
+  h2 {
+    text-align: center;
+    margin: 12px 0;
+    font-size: 20px;
+    letter-spacing: 1px;
+  }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 14px;
+    box-shadow: var(--shadow);
+    margin-bottom: 14px;
+  }
+
+  .input-group {
+    margin: 10px 0;
+  }
+
+  label {
+    font-size: 14px;
+    color: var(--muted);
+  }
+
+  input[type="number"], input[type="text"] {
+    width: 100%;
+    padding: 12px;
+    margin-top: 8px;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: #0d111a;
+    color: var(--text);
+    outline: none;
+  }
+
+  .warning {
+    color: var(--danger);
+    font-weight: bold;
+    margin-top: 8px;
+  }
+
+  .result {
+    margin-top: 12px;
+    padding: 12px;
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    background: #0d111a;
+  }
+
+  .result p {
+    margin: 6px 0;
+    font-size: 14px;
+  }
+
+  .list {
+    margin-top: 10px;
+  }
+
+  .item {
+    display: flex;
+    gap: 10px;
+    margin: 8px 0;
+  }
+
+  .item input {
+    flex: 1;
+  }
+
+  .item button {
+    width: auto;
+    padding: 8px 10px;
+    font-size: 14px;
+    border: none;
+    border-radius: 12px;
+    background: #2a2f3f;
+    color: var(--text);
+    cursor: pointer;
+  }
+
+  .section-title {
+    margin-top: 12px;
+    font-weight: bold;
+  }
+
+  .btn {
+    width: 100%;
+    padding: 12px;
+    margin-top: 10px;
+    border: none;
+    border-radius: 16px;
+    background: var(--accent);
+    color: #fff;
+    font-size: 16px;
+    cursor: pointer;
+    box-shadow: var(--shadow);
+  }
+
+  .btn:hover {
+    background: #6a4cff;
+  }
+
+  .btn-secondary {
+    background: #2a2f3f;
+  }
+
+  .btn-secondary:hover {
+    background: #3b4353;
+  }
+
+  .month-list {
+    margin-top: 14px;
+  }
+
+  .month-item {
+    display: flex;
+    justify-content: space-between;
+    background: #0d111a;
+    padding: 12px;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    margin: 8px 0;
+  }
+
+  .month-item button {
+    width: auto;
+    padding: 8px 10px;
+    margin: 0;
+    font-size: 14px;
+    border: none;
+    border-radius: 12px;
+    background: #2a2f3f;
+    color: var(--text);
+    cursor: pointer;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 14px;
+  }
+
+  th, td {
+    border: 1px solid #2a2f3f;
+    padding: 8px;
+    text-align: center;
+    font-size: 13px;
+  }
+
+  th {
+    background: #0d111a;
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h2>Lisa理財小程式</h2>
+
+  <div class="card">
+    <div class="input-group">
+      <label>月份（例如：2026/01）</label>
+      <input type="text" id="month" placeholder="請輸入月份">
+    </div>
+
+    <div class="input-group">
+      <label>收入</label>
+      <input type="number" id="income" placeholder="請輸入收入">
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">固定支出（可新增項目）</div>
+    <div id="fixedList" class="list"></div>
+    <button class="btn btn-secondary" id="addFixedBtn">新增固定支出項目</button>
+  </div>
+
+  <div class="card">
+    <div class="section-title">負債（可新增項目）</div>
+    <div id="debtList" class="list"></div>
+    <button class="btn btn-secondary" id="addDebtBtn">新增負債項目</button>
+  </div>
+
+  <div class="card">
+    <div class="section-title">比例項目（可新增項目）</div>
+    <div id="customList" class="list"></div>
+    <button class="btn btn-secondary" id="addItemBtn">新增比例項目</button>
+
+    <div class="warning" id="warning"></div>
+
+    <div class="result">
+      <p>固定支出總和：<span id="fixedTotal">0</span> 元</p>
+      <p>負債總和：<span id="debtTotal">0</span> 元</p>
+      <p>可分配金額：<span id="available">0</span> 元</p>
+      <p>分配結果：</p>
+      <div id="distribution"></div>
+    </div>
+  </div>
+
+  <button class="btn" id="saveBtn">儲存本月資料</button>
+  <button class="btn btn-secondary" id="clearBtn">清空資料</button>
+
+  <div class="month-list" id="monthList"></div>
+
+  <h3>📌 月支出審核統整（最多顯示 6 個月）</h3>
+  <table id="summaryTable">
+    <thead id="tableHead"></thead>
+    <tbody id="tableBody"></tbody>
+  </table>
+</div>
+
+<script>
+  const incomeEl = document.getElementById("income");
+  const warningEl = document.getElementById("warning");
+  const fixedListEl = document.getElementById("fixedList");
+  const debtListEl = document.getElementById("debtList");
+  const customListEl = document.getElementById("customList");
+  const fixedTotalEl = document.getElementById("fixedTotal");
+  const debtTotalEl = document.getElementById("debtTotal");
+  const availableEl = document.getElementById("available");
+  const distributionEl = document.getElementById("distribution");
+  const monthEl = document.getElementById("month");
+  const monthListEl = document.getElementById("monthList");
+
+  const tableHead = document.getElementById("tableHead");
+  const tableBody = document.getElementById("tableBody");
+
+  const STORAGE_KEY = "lisa_saving_app_data";
+
+  let data = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {
+    current: {},
+    history: []
+  };
+
+  function saveToLocal() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  }
+
+  function addFixedItem(name = "", amount = "") {
+    const itemDiv = document.createElement("div");
+    itemDiv.className = "item";
+    itemDiv.innerHTML = `
+      <input type="text" class="fixedName" value="${name}" placeholder="輸入名稱">
+      <input type="number" class="fixedAmount" value="${amount}" placeholder="輸入金額">
+      <button class="deleteBtn">刪除</button>
+    `;
+    fixedListEl.appendChild(itemDiv);
+
+    itemDiv.querySelector(".deleteBtn").addEventListener("click", () => {
+      itemDiv.remove();
+      calculate();
+    });
+
+    itemDiv.querySelector(".fixedName").addEventListener("input", calculate);
+    itemDiv.querySelector(".fixedAmount").addEventListener("input", calculate);
+  }
+
+  function addDebtItem(name = "", amount = "") {
+    const itemDiv = document.createElement("div");
+    itemDiv.className = "item";
+    itemDiv.innerHTML = `
+      <input type="text" class="debtName" value="${name}" placeholder="輸入名稱">
+      <input type="number" class="debtAmount" value="${amount}" placeholder="輸入金額">
+      <button class="deleteBtn">刪除</button>
+    `;
+    debtListEl.appendChild(itemDiv);
+
+    itemDiv.querySelector(".deleteBtn").addEventListener("click", () => {
+      itemDiv.remove();
+      calculate();
+    });
+
+    itemDiv.querySelector(".debtName").addEventListener("input", calculate);
+    itemDiv.querySelector(".debtAmount").addEventListener("input", calculate);
+  }
+
+  function addCustomItem(name = "生活費", rate = 50) {
+    const itemDiv = document.createElement("div");
+    itemDiv.className = "item";
+    itemDiv.innerHTML = `
+      <input type="text" class="itemName" value="${name}">
+      <input type="number" class="itemRate" value="${rate}">
+      <button class="deleteBtn">刪除</button>
+    `;
+    customListEl.appendChild(itemDiv);
+
+    itemDiv.querySelector(".deleteBtn").addEventListener("click", () => {
+      itemDiv.remove();
+      calculate();
+    });
+
+    itemDiv.querySelector(".itemName").addEventListener("input", calculate);
+    itemDiv.querySelector(".itemRate").addEventListener("input", calculate);
+  }
+
+  document.getElementById("addFixedBtn").addEventListener("click", () => addFixedItem());
+  document.getElementById("addDebtBtn").addEventListener("click", () => addDebtItem());
+  document.getElementById("addItemBtn").addEventListener("click", () => addCustomItem());
+
+  function getFixedList() {
+    const items = [];
+    fixedListEl.querySelectorAll(".item").forEach(div => {
+      const name = div.querySelector(".fixedName").value || "固定支出";
+      const amount = Number(div.querySelector(".fixedAmount").value) || 0;
+      items.push({ name, amount });
+    });
+    return items;
+  }
+
+  function getDebtList() {
+    const items = [];
+    debtListEl.querySelectorAll(".item").forEach(div => {
+      const name = div.querySelector(".debtName").value || "負債";
+      const amount = Number(div.querySelector(".debtAmount").value) || 0;
+      items.push({ name, amount });
+    });
+    return items;
+  }
+
+  function getCustomList() {
+    const items = [];
+    customListEl.querySelectorAll(".item").forEach(div => {
+      const name = div.querySelector(".itemName").value || "項目";
+      const rate = Number(div.querySelector(".itemRate").value) || 0;
+      items.push({ name, rate });
+    });
+    return items;
+  }
+
+  function calculate() {
+    const income = Number(incomeEl.value) || 0;
+
+    const fixedItems = getFixedList();
+    const debtItems = getDebtList();
+    const customItems = getCustomList();
+
+    const fixedTotal = fixedItems.reduce((sum, item) => sum + item.amount, 0);
+    const debtTotal = debtItems.reduce((sum, item) => sum + item.amount, 0);
+
+    const available = income - fixedTotal - debtTotal;
+    availableEl.innerText = available;
+    fixedTotalEl.innerText = fixedTotal;
+    debtTotalEl.innerText = debtTotal;
+
+    const totalRate = customItems.reduce((sum, item) => sum + item.rate, 0);
+
+    if (totalRate !== 100) {
+      warningEl.innerText = "⚠️ 比例總和不是 100%";
+    } else if (available < 0) {
+      warningEl.innerText = "⚠️ 可分配金額為負數，請檢查收入/固定支出/負債";
+    } else {
+      warningEl.innerText = "";
+    }
+
+    distributionEl.innerHTML = "";
+    customItems.forEach(item => {
+      const amount = available * item.rate / 100;
+      const div = document.createElement("div");
+      div.className = "chart-item";
+      div.innerHTML = `<span>${item.name}</span><span>${item.rate}%（$${Math.round(amount)}）</span>`;
+      distributionEl.appendChild(div);
+    });
+
+    data.current = {
+      month: monthEl.value,
+      income,
+      fixedItems,
+      debtItems,
+      customItems,
+      fixedTotal,
+      debtTotal,
+      available,
+      totalRate
+    };
+    saveToLocal();
+  }
+
+  function renderHistory() {
+    monthListEl.innerHTML = "";
+    data.history.forEach((item, index) => {
+      const div = document.createElement("div");
+      div.className = "month-item";
+      div.innerHTML = `
+        <div>
+          <div><strong>${item.month}</strong></div>
+          <div>收入：${item.income}</div>
+        </div>
+        <div>
+          <button onclick="loadMonth(${index})">載入</button>
+          <button onclick="deleteMonth(${index})">刪除</button>
+        </div>
+      `;
+      monthListEl.appendChild(div);
+    });
+
+    renderSummaryTable();
+  }
+
+  function renderSummaryTable() {
+    const history = data.history.slice(0, 6);
+
+    tableHead.innerHTML = "";
+    tableBody.innerHTML = "";
+
+    if (history.length === 0) return;
+
+    const headRow = document.createElement("tr");
+    headRow.innerHTML = `
+      <th>月份</th>
+      <th>收入</th>
+      <th>固定支出</th>
+      <th>負債</th>
+      <th>可分配</th>
+      <th>比例是否100%</th>
+    `;
+    tableHead.appendChild(headRow);
+
+    history.forEach(item => {
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td>${item.month}</td>
+        <td>${item.income}</td>
+        <td>${item.fixedTotal}</td>
+        <td>${item.debtTotal}</td>
+        <td>${item.available}</td>
+        <td>${item.totalRate === 100 ? "✅" : "❌"}</td>
+      `;
+      tableBody.appendChild(row);
+
+      item.customItems.forEach(sub => {
+        const subRow = document.createElement("tr");
+        const amount = Math.round(item.available * sub.rate / 100);
+        subRow.innerHTML = `
+          <td colspan="2">→ ${sub.name}</td>
+          <td colspan="5">${sub.rate}%（$${amount}）</td>
+        `;
+        tableBody.appendChild(subRow);
+      });
+    });
+  }
+
+  window.loadMonth = function(index) {
+    const item = data.history[index];
+    monthEl.value = item.month;
+    incomeEl.value = item.income;
+
+    fixedListEl.innerHTML = "";
+    item.fixedItems.forEach(it => addFixedItem(it.name, it.amount));
+
+    debtListEl.innerHTML = "";
+    item.debtItems.forEach(it => addDebtItem(it.name, it.amount));
+
+    customListEl.innerHTML = "";
+    item.customItems.forEach(it => addCustomItem(it.name, it.rate));
+
+    calculate();
+  }
+
+  window.deleteMonth = function(index) {
+    data.history.splice(index, 1);
+    saveToLocal();
+    renderHistory();
+  }
+
+  document.getElementById("saveBtn").addEventListener("click", () => {
+    const newItem = {
+      month: monthEl.value || `第${data.history.length + 1}月`,
+      income: Number(incomeEl.value) || 0,
+      fixedItems: getFixedList(),
+      debtItems: getDebtList(),
+      customItems: getCustomList()
+    };
+
+    const fixedTotal = newItem.fixedItems.reduce((sum, item) => sum + item.amount, 0);
+    const debtTotal = newItem.debtItems.reduce((sum, item) => sum + item.amount, 0);
+    const available = newItem.income - fixedTotal - debtTotal;
+    const totalRate = newItem.customItems.reduce((sum, item) => sum + item.rate, 0);
+
+    newItem.fixedTotal = fixedTotal;
+    newItem.debtTotal = debtTotal;
+    newItem.available = available;
+    newItem.totalRate = totalRate;
+
+    data.history.unshift(newItem);
+    saveToLocal();
+    renderHistory();
+    alert("已儲存本月資料！");
+  });
+
+  document.getElementById("clearBtn").addEventListener("click", () => {
+    if (confirm("確定要清空所有資料嗎？")) {
+      data = { current: {}, history: [] };
+      saveToLocal();
+      monthEl.value = "";
+      incomeEl.value = "";
+      fixedListEl.innerHTML = "";
+      debtListEl.innerHTML = "";
+      customListEl.innerHTML = "";
+      addFixedItem();
+      addDebtItem();
+      addCustomItem("生活費", 50);
+      addCustomItem("儲蓄", 30);
+      addCustomItem("其他", 20);
+      calculate();
+      renderHistory();
+    }
+  });
+
+  [incomeEl, monthEl].forEach(el => el.addEventListener("input", calculate));
+
+  if (data.current && data.current.customItems) {
+    monthEl.value = data.current.month || "";
+    incomeEl.value = data.current.income || "";
+    fixedListEl.innerHTML = "";
+    debtListEl.innerHTML = "";
+    customListEl.innerHTML = "";
+    data.current.fixedItems.forEach(it => addFixedItem(it.name, it.amount));
+    data.current.debtItems.forEach(it => addDebtItem(it.name, it.amount));
+    data.current.customItems.forEach(it => addCustomItem(it.name, it.rate));
+  } else {
+    addFixedItem();
+    addDebtItem();
+    addCustomItem("生活費", 50);
+    addCustomItem("儲蓄", 30);
+    addCustomItem("其他", 20);
+  }
+
+  calculate();
+  renderHistory();
+</script>
+
+</body>
+</html>
