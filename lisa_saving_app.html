@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lisa理財小程式</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f7f7f7;
+        }
+
+        .container {
+            max-width: 420px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        h2 {
+            text-align: center;
+        }
+
+        label {
+            display: block;
+            margin-top: 12px;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+            margin-top: 4px;
+            box-sizing: border-box;
+        }
+
+        .result {
+            margin-top: 15px;
+            font-size: 18px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .warning {
+            text-align: center;
+            margin-top: 8px;
+            font-weight: bold;
+        }
+
+        canvas {
+            display: block;
+            margin: 20px auto;
+        }
+
+        hr {
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Lisa理財小程式</h2>
+
+    <label>收入</label>
+    <input type="number" id="income" oninput="calculate()">
+
+    <label>固定支出</label>
+    <input type="number" id="fixed" oninput="calculate()">
+
+    <label>負債金額</label>
+    <input type="number" id="debt" oninput="calculate()">
+
+    <hr>
+
+    <div class="result">
+        可分配金額：<span id="available">0</span> 元
+    </div>
+
+    <hr>
+
+    <label>生活費比例（%）</label>
+    <input type="number" id="lifeRate" value="50" oninput="calculate()">
+
+    <label>儲蓄比例（%）</label>
+    <input type="number" id="saveRate" value="30" oninput="calculate()">
+
+    <label>其他比例（%）</label>
+    <input type="number" id="otherRate" value="20" oninput="calculate()">
+
+    <div class="warning" id="rateWarning"></div>
+
+    <canvas id="pieChart" width="260" height="260"></canvas>
+
+    <hr>
+
+    <p>生活費金額：<span id="life">0</span> 元</p>
+    <p>儲蓄金額：<span id="save">0</span> 元</p>
+    <p>其他金額：<span id="other">0</span> 元</p>
+</div>
+
+<script>
+function calculate() {
+    var income = Number(document.getElementById("income").value);
+    var fixed = Number(document.getElementById("fixed").value);
+    var debt = Number(document.getElementById("debt").value);
+
+    var available = income - fixed - debt;
+    if (available < 0) available = 0;
+    document.getElementById("available").innerText = available;
+
+    var lifeRate = Number(document.getElementById("lifeRate").value);
+    var saveRate = Number(document.getElementById("saveRate").value);
+    var otherRate = Number(document.getElementById("otherRate").value);
+
+    var rateTotal = lifeRate + saveRate + otherRate;
+    var warning = document.getElementById("rateWarning");
+
+    if (rateTotal !== 100) {
+        warning.innerText = "⚠️ 目前比例總和：" + rateTotal + "%（需等於 100%）";
+        warning.style.color = "red";
+    } else {
+        warning.innerText = "✔ 比例正確（100%）";
+        warning.style.color = "green";
+    }
+
+    var lifeMoney = Math.round(available * lifeRate / 100);
+    var saveMoney = Math.round(available * saveRate / 100);
+    var otherMoney = Math.round(available * otherRate / 100);
+
+    document.getElementById("life").innerText = lifeMoney;
+    document.getElementById("save").innerText = saveMoney;
+    document.getElementById("other").innerText = otherMoney;
+
+    drawPie(lifeMoney, saveMoney, otherMoney);
+}
+
+function drawPie(life, save, other) {
+    var canvas = document.getElementById("pieChart");
+    var ctx = canvas.getContext("2d");
+    var total = life + save + other;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    if (total === 0) return;
+
+    var startAngle = 0;
+    var colors = ["#4CAF50", "#2196F3", "#FFC107"];
+    var values = [life, save, other];
+
+    for (var i = 0; i < values.length; i++) {
+        var sliceAngle = (values[i] / total) * 2 * Math.PI;
+        ctx.beginPath();
+        ctx.moveTo(130, 130);
+        ctx.arc(130, 130, 120, startAngle, startAngle + sliceAngle);
+        ctx.closePath();
+        ctx.fillStyle = colors[i];
+        ctx.fill();
+        startAngle += sliceAngle;
+    }
+}
+</script>
+
+</body>
+</html>
